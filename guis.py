@@ -15,7 +15,7 @@ class Guis:
 
         self.message_buffer = message_buffer
 
-        self.root = tk.Tk(screenName="user", className='TK')
+        self.root = tk.Tk(className='TK')
         self.root.withdraw()
 
         self.user_A = self._create_user_window_("A", self.toProcessAQueue, self.fromProcessAQueue)
