@@ -1,13 +1,8 @@
 from guis import Guis
 from message import Message
-from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.Hash import HMAC, SHA256
-from Crypto.Random import get_random_bytes
-import sys
-from queue import Queue, Empty
+from queue import Queue
 from threading import Thread
-from Crypto.PublicKey import RSA
-from time import sleep
+import os
 
 # Thread method for the attacker's backend logic
 from attacker_backend import attacker_backend
@@ -17,6 +12,23 @@ from user_backend import user_backend
 
 
 if __name__ == '__main__':
+    # Clear logs
+    os.makedirs("attacker_logs", exist_ok=True)
+    os.makedirs("user_a_logs", exist_ok=True)
+    os.makedirs("user_b_logs", exist_ok=True)
+    with open("attacker_logs/confidentiality_attack_message_logs.txt", "w", encoding="utf-8") as log_file:
+        log_file.write("=== Confidentiality Attack Log Start ===\n")
+
+    with open("attacker_logs/integrity_attack_message_logs.txt", "w", encoding="utf-8") as log_file:
+        log_file.write("=== Integrity Attack Log Start ===\n")
+
+    with open("user_a_logs/traffic.txt", "w", encoding="utf-8") as log_file:
+        log_file.write("=== Integrity Attack Log Start ===\n")
+
+    with open("user_b_logs/traffic.txt", "w", encoding="utf-8") as log_file:
+        log_file.write("=== Integrity Attack Log Start ===\n")
+
+
     message = Message('OK', "Default message")
     # guiToProcessAPipleine = DoubleQueue()
     # processAToProcessBPipleine = DoubleQueue()

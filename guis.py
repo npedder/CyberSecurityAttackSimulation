@@ -34,19 +34,27 @@ class Guis:
             newMessage = Message("OK", content)
             toProcess.put(newMessage)
 
-        def start_session():  # Show full UI after start
-            start_button.pack_forget()
-            ui_frame.pack()
-            update_message()
-
-            # Tell backend to start exchange
-            newMessage = Message("Start", '')
-            toProcess.put(newMessage)
-
         def update_message():
             try:
                 message_body = fromProcess.get_nowait()
                 message.config(text=message_body)
+
+                # Unlock user B's text after OK message
+                if username == "B" and message_body == "OK":
+                    entry.config(state=tk.NORMAL)
+                    button.config(state=tk.NORMAL)
+
+                # === ADDED: Status update logic (based on message content) ===
+                if "public key" in message_body.lower():
+                    status_label.config(text="Status: Public key received")
+                elif "aes" in message_body.lower() or "symmetric key" in message_body.lower():
+                    status_label.config(text="Status: Symmetric key exchanged")
+                elif "modified" in message_body.lower() or "altered" in message_body.lower():
+                    status_label.config(text="Status: Message altered by attacker")
+                else:
+                    status_label.config(text="Status: Message received")
+                # === END ADDED ===
+
             except Empty:
                 pass
             win.after(100, update_message)
@@ -55,17 +63,19 @@ class Guis:
         win.resizable(height=False, width=False)
         win.title("User " + username + ":")
 
-        start_button = tk.Button(win, text='Start', command=start_session, height=3, width=20)
-
-        start_button.pack(padx=30, pady=30)
-
         ui_frame = tk.Frame(win)
+        ui_frame.pack(padx=30, pady=30)
 
-        user_label = tk.Label(ui_frame, text="User " + username + ":")
+        user_label = tk.Label(ui_frame, text="User " + username + ":", foreground="green")
         user_label.pack()
 
-        message = tk.Message(ui_frame, text="Message will appear here", foreground="grey", width=300)
+        message = tk.Message(ui_frame, text="Message will appear here", foreground="black", width=300)
         message.pack()
+
+        # === ADDED: Status notifications label ===
+        status_label = tk.Label(ui_frame, text="Status: Waiting for message", foreground="blue")
+        status_label.pack()
+        # === END ADDED ===
 
         entry = tk.Text(ui_frame, height=10, width=40)
         entry.pack(padx=10, pady=10)
@@ -73,7 +83,12 @@ class Guis:
         button = tk.Button(ui_frame, text='Send', command=send_text)
         button.pack()
 
+        # Initially disable User B's input, only user A can type
+        if username == "B":
+            entry.config(state=tk.DISABLED)
+            button.config(state=tk.DISABLED)
 
+        update_message()
 
         return win
 
@@ -94,10 +109,6 @@ class Guis:
 
             # Re-run the update_message function in 100 ms
             win.after(100, update_message)
-
-        def start_integrity_attack():
-            newMessage = Message("IntegrityAttack", '')
-            self.toAttackerQueue.put(newMessage)
 
         # Tell attacker backend to stop/start the availability attack
         def availability_attack():
@@ -120,11 +131,17 @@ class Guis:
             else:
                 confidentiality_button.config(text='Start Confidentiality Attack')
 
+        def integrity_attack():
+            content = entry.get("1.0", tk.END)
+            newMessage = Message("IntegrityAttack", content)
+            self.toAttackerQueue.put(newMessage)
+
+
         win = tk.Toplevel()
         win.resizable(height=False, width=False)
         win.title("Attacker:")
 
-        user_label = tk.Label(win, text="Attacker:")
+        user_label = tk.Label(win, text="Attacker:", foreground="red")
         user_label.pack()
 
         message = tk.Message(win, text="Message will appear here", foreground="grey")
@@ -133,17 +150,17 @@ class Guis:
         entry = tk.Text(win, height=10, width=40)
         entry.pack(padx=10, pady=10)
 
-        send_button = tk.Button(win, text='Send', command=send_text)
-        send_button.pack()
-
-        availability_button = tk.Button(win, text='Start Availability Attack', command=availability_attack)
-        availability_button.pack()
-
-        integrity_button = tk.Button(win, text='Start Integrity Attack', command=send_text)
-        integrity_button.pack()
+        # send_button = tk.Button(win, text='Send', command=send_text)
+        # send_button.pack()
 
         confidentiality_button = tk.Button(win, text='Start Confidentiality Attack', command=confidentiality_attack)
         confidentiality_button.pack()
+
+        integrity_button = tk.Button(win, text='Send Message as a User (Impersonation)', command=integrity_attack)
+        integrity_button.pack()
+
+        availability_button = tk.Button(win, text='Start Availability Attack', command=availability_attack)
+        availability_button.pack()
 
         # Start checking for new messages
         update_message()
